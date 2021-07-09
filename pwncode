@@ -35,8 +35,6 @@ class str_ret:
 
     def __str__(self):
         if True == True:
-            return "sdsad"
-        else:
             return "%s %s %s%s %s " % (self.file, self.a_arg, self.b_arg,
                                        self.c_arg, self.d_arg)
 

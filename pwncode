@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+from cmd import Cmd
+import logging
+import tempfile
+from os import write, close, CLD_DUMPED
+
+BITS = 64
+
+
+class s_event:
+    def __init__(self, a_er=None, b_er=None):
+        self.a_ty = a_er
+        self.b_ty = b_er
+
+    def __repr__(self):
+        return "Error support bits are 16, 32, 64 - %s %s" % (self.a_ty, self.b_ty)
+
+
+class str_ret:
+    def __init__(self, f_nsm=None, v_loc=None, bit=None):
+        # nasm disas
+        self.file = "nasm"
+        self.a_arg = "-f"
+        self.b_arg = "elf"
+        self.c_arg = bit
+        self.loc = v_loc
+        self.slash = "/"
+        self.d_arg = f_nsm
+
+        # nasm shellcoding
+        self.e_arg = "-fbin"
+
+    def __str__(self):
+        if True == True:
+            return "sdsad"
+        else:
+            return "%s %s %s%s %s " % (self.file, self.a_arg, self.b_arg,
+                                       self.c_arg, self.d_arg)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+def f_compiler(file, bit):
+    paste = os.getcwd()
+
+    cstring = str_ret(file, paste, bit)
+    c_asm = str(cstring)
+    os.system(c_asm)
+    c_split = file.split(".")
+    r_name = c_split[0]+".o"
+    n_name = c_split[0] + ".out"
+
+    subprocess.call(["ld", r_name, "-o", n_name])
+
+
+class c_compiler:
+    def __init__(self, a=None, b=64, mode=None):
+        self.file = a
+        self.bit = b
+        self.s_mode = mode
+        print(self.s_mode)
+        self.shellcode = True
+
+        f_compiler(self.file, self.bit)
+
+
+class dk_side:
+    def __init__(self, name, bit):
+        self.name = name
+        self.bit = bit
+
+    # write call
+    def tmpfd(self):
+        fd, f_loc = tempfile.mkstemp()
+        # temp file debug
+        write(fd, b"[BITS %u]\n_start:\n" % (self.bit))
+        while True:
+            w_tmp = input(">")
+            if (w_tmp != "exit") and (w_tmp != "done") and (w_tmp != "c"):
+                write(fd, w_tmp.encode())
+                write(fd, b"\n")
+
+            else:
+                # os.close(fd)
+                f_bin = f_loc + ".bin"
+                subprocess.call(['nasm', '-fbin', f_loc, '-o', f_bin])
+                f_out = "ndisasm -b{} {} ".format(self.bit, f_bin)
+                os.system(f_out)
+                os.unlink(f_loc)
+                os.remove(f_bin)
+
+                return 0
+
+
+class pwnshell(Cmd):
+    def __init__(self):
+        Cmd.__init__(self)
+        self.fbits = BITS
+        self.prompt = "pwncode#"
+
+    def do_bits(self, fbits):
+        if not fbits or len(fbits) == 0:
+            print("Current bit {}".format(self.fbits))
+        else:
+            if fbits in ['16', '32', '64']:
+                self.fbits = fbits
+            else:
+                print(s_event(fbits))
+
+    def do_b(self, fbits):
+        if not fbits or len(fbits) == 0:
+            print("Current bit {}".format(self.fbits))
+        else:
+            if fbits in ['16', '32', '64']:
+                self.fbits = fbits
+            else:
+                print(s_event(fbits))
+
+    def emptyline(self):
+        text = input("type in Enter")  # or raw_input in python2
+        if text == "":
+            print("---Darkside---")
+            a = dk_side("aditya", int(self.fbits))
+            a.tmpfd()
+        else:
+            print("you typed some text before pressing enter")
+
+
+if len(sys.argv) > 1:
+    c_compiler(sys.argv[1], 64, mode=True)
+else:
+    pwnshell().cmdloop()
